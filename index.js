@@ -324,6 +324,7 @@ async function startBot() {
           }
         }
       }
+      }
     } catch (e) {
       console.error('[MSG HANDLER ERROR]', e.message);
     }
