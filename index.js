@@ -281,14 +281,15 @@ async function startBot() {
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
-    for (const msg of messages) {
-      if (!msg.key.fromMe && msg.message) {
-        const text = msg.message.conversation
-          || msg.message.extendedTextMessage?.text
-          || '';
-        const from = msg.key.remoteJid;
+    try {
+      for (const msg of messages) {
+        if (!msg.key.fromMe && msg.message) {
+          const text = msg.message.conversation
+            || msg.message.extendedTextMessage?.text
+            || '';
+          const from = msg.key.remoteJid;
 
-        if (text.startsWith(PREFIX)) {
+          if (text.startsWith(PREFIX)) {
           const [cmd, ...args] = text.slice(PREFIX.length).trim().split(/\s+/);
           const arg = args.join(' ');
 
@@ -323,6 +324,8 @@ async function startBot() {
           }
         }
       }
+    } catch (e) {
+      console.error('[MSG HANDLER ERROR]', e.message);
     }
   });
 }
