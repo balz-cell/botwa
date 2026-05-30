@@ -1,12 +1,12 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { Boom } = require('@hapi/boom');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
-const QRCode = require('qrcode-terminal');
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import axios from 'axios';
+import cheerio from 'cheerio';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
+import QRCode from 'qrcode-terminal';
 
 // ---------- CONFIG ----------
 const PORT = process.env.PORT || 3000;
@@ -45,19 +45,16 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedUrl.pathname;
   const method = req.method.toUpperCase();
 
-  // CORS preflight
   if (method === 'OPTIONS') {
     jsonResponse(res, 200, {});
     return;
   }
 
-  // Auth check
   const authHeader = req.headers['authorization'] || '';
   const reqApiKey = authHeader.replace('Bearer ', '') || parsedUrl.query.api_key || '';
   const isAuthenticated = reqApiKey === API_KEY;
 
   try {
-    // GET / — status
     if (pathname === '/' && method === 'GET') {
       jsonResponse(res, 200, {
         status: 'ok',
@@ -68,7 +65,6 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/send — kirim pesan WA
     if (pathname === '/api/send' && method === 'POST') {
       if (!isAuthenticated) {
         jsonResponse(res, 401, { error: 'Unauthorized. Gunakan header Authorization: Bearer <API_KEY>' });
@@ -87,7 +83,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      messageLog.push({ to, message, type: msgType, status: 'sending', time: new Date().toISOString() });
+      messageLog.push({ to, message, type: type || 'text', status: 'sending', time: new Date().toISOString() });
 
       const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
       const msgType = type === 'image' ? 'image' : type === 'video' ? 'video' : 'text';
@@ -103,7 +99,6 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/broadcast — kirim pesan ke banyak nomor
     if (pathname === '/api/broadcast' && method === 'POST') {
       if (!isAuthenticated) {
         jsonResponse(res, 401, { error: 'Unauthorized' });
@@ -138,7 +133,6 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // GET /api/logs — ambil log pengiriman
     if (pathname === '/api/logs' && method === 'GET') {
       if (!isAuthenticated) {
         jsonResponse(res, 401, { error: 'Unauthorized' });
@@ -149,7 +143,6 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Fallback 404
     jsonResponse(res, 404, { error: 'Not found' });
   } catch (e) {
     console.error('[API ERROR]', e.message);
@@ -164,11 +157,9 @@ server.listen(PORT, () => {
 // ---------- INSTAGRAM DOWNLOADER ----------
 async function downloadInstagram(url) {
   try {
-    // Source 1: indown.io
     const result = await scrapIndown(url);
     if (result) return result;
 
-    // Source 2: snapinsta fallback
     const result2 = await scrapSnapinsta(url);
     if (result2) return result2;
 
@@ -243,7 +234,6 @@ async function scrapSnapinsta(url) {
   }
 }
 
-// ---------- DOWNLOAD MEDIA TO BUFFER ----------
 async function mediaToBuffer(url) {
   const resp = await axios.get(url, {
     responseType: 'arraybuffer',
@@ -264,7 +254,6 @@ async function startBot() {
     defaultQueryTimeoutMs: 60000,
   });
 
-  // Pairing code (biar gak ribet scan QR di server)
   if (!sock.authState.creds.registered) {
     setTimeout(async () => {
       const phoneNumber = process.env.PAIRING_NUMBER || '';
@@ -341,9 +330,7 @@ async function startBot() {
   });
 }
 
-// ---------- HANDLE INSTAGRAM ----------
 async function handleInstagram(sock, from, url) {
-  // Validasi URL Instagram
   const igRegex = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/(p|reel|tv)\/([a-zA-Z0-9_-]+)/i;
   if (!igRegex.test(url.trim())) {
     await sock.sendMessage(from, {
@@ -379,7 +366,6 @@ async function handleInstagram(sock, from, url) {
       });
     }
 
-    // Kirim thumbnail juga kalo ada
     if (result.thumbnail && result.type === 'video') {
       try {
         const thumbBuf = await mediaToBuffer(result.thumbnail);
