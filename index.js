@@ -1,12 +1,12 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const { Boom } = require('@hapi/boom');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
-const QRCode = require('qrcode-terminal');
+import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import axios from 'axios';
+import { load as cheerioLoad } from 'cheerio';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
+import QRCode from 'qrcode-terminal';
 
 // ---------- CONFIG ----------
 const PORT = process.env.PORT || 3000;
@@ -201,7 +201,7 @@ async function scrapSnapinsta(url) {
     const { data: html } = await axios.get('https://snapinsta.app/id', {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
-    const $ = cheerio.load(html);
+    const $ = cheerioLoad(html);
     const token = $('input[name="token"]').val() || '';
 
     const { data } = await axios.post('https://snapinsta.app/action2', new URLSearchParams({
