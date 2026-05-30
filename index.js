@@ -1,7 +1,7 @@
 import { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import axios from 'axios';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -204,7 +204,7 @@ async function scrapSnapinsta(url) {
     const { data: html } = await axios.get('https://snapinsta.app/id', {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
-    const $ = cheerio.load(html);
+    const $ = cheerioLoad(html);
     const token = $('input[name="token"]').val() || '';
 
     const { data } = await axios.post('https://snapinsta.app/action2', new URLSearchParams({
