@@ -275,19 +275,36 @@ async function startBot() {
     } else if (connection === 'open') {
       console.log('[BOT] WhatsApp connected!');
       sockInstance = sock;
+
+      // Kirim test ke diri sendiri
+      const ownJid = sock.user.id.replace(/:.*/, '@s.whatsapp.net');
+      setTimeout(async () => {
+        try {
+          await sock.sendMessage(ownJid, { text: `🤖 Bot aktif! Ketik !help` });
+          console.log('[BOT] Test message sent');
+        } catch (e) {
+          console.log('[BOT] Test message failed:', e.message);
+        }
+      }, 3000);
     }
   });
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('messages.upsert', async ({ messages }) => {
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    console.log(`[MSG EVENT] type=${type} count=${messages.length}`);
     try {
       for (const msg of messages) {
+        console.log(`[MSG] fromMe=${msg.key.fromMe} hasMessage=${!!msg.message} from=${msg.key.remoteJid}`);
         if (!msg.key.fromMe && msg.message) {
+          const msgTypes = Object.keys(msg.message);
           const text = msg.message.conversation
             || msg.message.extendedTextMessage?.text
+            || msg.message.imageMessage?.caption
+            || msg.message.videoMessage?.caption
             || '';
           const from = msg.key.remoteJid;
+          console.log(`[MSG TEXT] "${text}" types=${JSON.stringify(msgTypes)} from=${from}`);
 
           if (text.startsWith(PREFIX)) {
           const [cmd, ...args] = text.slice(PREFIX.length).trim().split(/\s+/);
@@ -297,10 +314,13 @@ async function startBot() {
             case 'ig':
             case 'instagram':
             case 'igdl':
+              console.log('[CMD] ig');
               if (!arg) {
-                await sock.sendMessage(from, {
-                  text: `Cara pakai: ${PREFIX}ig <url_instagram>\n\nContoh: ${PREFIX}ig https://www.instagram.com/p/ABC123/`
-                });
+                try {
+                  await sock.sendMessage(from, {
+                    text: `Cara pakai: ${PREFIX}ig <url_instagram>\n\nContoh: ${PREFIX}ig https://www.instagram.com/p/ABC123/`
+                  });
+                } catch (e) { console.log('[CMD] ig help send ERROR:', e.message); }
                 return;
               }
               await handleInstagram(sock, from, arg);
@@ -308,13 +328,19 @@ async function startBot() {
 
             case 'help':
             case 'menu':
-              await sock.sendMessage(from, {
-                text: `🤖 *Bot WA Instagram Downloader*\n\n` +
-                      `📌 *Command:*\n` +
-                      `• ${PREFIX}ig <url> - Download IG post/reel\n` +
-                      `• ${PREFIX}help - Tampilkan menu ini\n\n` +
-                      `💡 *Contoh:*\n${PREFIX}ig https://www.instagram.com/p/ABC123/`
-              });
+              console.log('[CMD] help');
+              try {
+                await sock.sendMessage(from, {
+                  text: `🤖 *Bot WA Instagram Downloader*\n\n` +
+                        `📌 *Command:*\n` +
+                        `• ${PREFIX}ig <url> - Download IG post/reel\n` +
+                        `• ${PREFIX}help - Tampilkan menu ini\n\n` +
+                        `💡 *Contoh:*\n${PREFIX}ig https://www.instagram.com/p/ABC123/`
+                });
+                console.log('[CMD] help sent OK');
+              } catch (e) {
+                console.log('[CMD] help send ERROR:', e.message);
+              }
               break;
 
             default:
