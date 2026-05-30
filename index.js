@@ -271,7 +271,10 @@ async function startBot() {
         ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
         : true;
       console.log('[BOT] Disconnected, reconnecting:', shouldReconnect);
-      if (shouldReconnect) startBot();
+      if (shouldReconnect) {
+        console.log('[BOT] Waiting 5s before reconnect...');
+        setTimeout(() => startBot(), 5000);
+      }
     } else if (connection === 'open') {
       console.log('[BOT] WhatsApp connected!');
       sockInstance = sock;
